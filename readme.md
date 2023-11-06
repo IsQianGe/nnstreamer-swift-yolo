@@ -29,3 +29,6 @@ gst-launch-1.0 \
   t. ! queue leaky=2 max-size-buffers=10 ! mix.sink_1 \
   compositor name=mix sink_0::zorder=2 sink_1::zorder=1 ! videoconvert ! ximagesink sync=false
 ```
+
+## result 
+![result](./result.png)
