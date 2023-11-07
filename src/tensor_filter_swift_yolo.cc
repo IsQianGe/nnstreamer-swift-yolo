@@ -68,7 +68,7 @@ class YolosCore
       const GstTensorMemory *input, GstTensorMemory *output);
 
     private:
-    char **model_path;
+    gchar *model_path[2];
     int num_threads;
     ncnn::Net net;
     
@@ -88,8 +88,8 @@ extern "C" { /* accessed by android api */
 YolosCore::YolosCore (const char **_model_path)
 {
   g_assert (_model_path != NULL);
-  model_path = g_strdupv  ((gchar**)_model_path);
-
+  // model_path = g_strdupv ((char **)_model_path);
+  memcpy(model_path, _model_path, sizeof(model_path));
   gst_tensors_info_init (&inputTensorMeta);
   gst_tensors_info_init (&outputTensorMeta);
 }
@@ -150,8 +150,8 @@ YolosCore::getModelPath ()
 int
 YolosCore::loadModel ()
 {
-  net.load_param(model_path[0]);
-  net.load_model(model_path[1]);
+  net.load_param(model_path[1]);
+  net.load_model(model_path[0]);
   return 0;
 }
 
@@ -212,10 +212,10 @@ YolosCore::invoke (const GstTensorFilterProperties *prop,
     input_shape.resize (prop->input_ranks[i]);
     std::reverse (input_shape.begin (), input_shape.end ());
     in_pad = ncnn::Mat::from_pixels_resize((const unsigned char*)input[i].data, ncnn::Mat::PIXEL_RGB2BGR, input_shape[0], input_shape[1], input_shape[0], input_shape[1]);
-    ex.input("images", in_pad);
-    ex.extract("output", out);
+    ex.input("in0", in_pad);
+    ex.extract("out0", out);
     // g_assert (out->bytes == output[i].size);
-    memcpy (output[i].data, out, output[i].size);
+    memcpy (output[i].data, out.data, output[i].size);
   }
   return 0;
 }
