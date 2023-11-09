@@ -200,7 +200,6 @@ YolosCore::invoke (const GstTensorFilterProperties *prop,
   ncnn::Mat in_pad;
   ncnn::Mat out;
   ncnn::Extractor ex = net.create_extractor();
-
   /** @todo Support other input types other than at::Tensor */
   for (uint i = 0; i < inputTensorMeta.num_tensors; ++i) {
     std::vector<int64_t> input_shape;
@@ -211,10 +210,13 @@ YolosCore::invoke (const GstTensorFilterProperties *prop,
 
     input_shape.resize (prop->input_ranks[i]);
     std::reverse (input_shape.begin (), input_shape.end ());
-    in_pad = ncnn::Mat::from_pixels_resize((const unsigned char*)input[i].data, ncnn::Mat::PIXEL_RGB2BGR, input_shape[0], input_shape[1], input_shape[0], input_shape[1]);
+
+    in_pad = ncnn::Mat::from_pixels_resize(input[i].data, ncnn::Mat::PIXEL_RGB, input_shape[1], input_shape[2],input_shape[1],input_shape[2]);
+    const float norm_vals[3] = {1 / 255.f, 1 / 255.f, 1 / 255.f};
+    in_pad.substract_mean_normalize(0, norm_vals);
     ex.input("in0", in_pad);
     ex.extract("out0", out);
-    // g_assert (out->bytes == output[i].size);
+    g_assert (out.total() * out.elemsize == output[i].size);
     memcpy (output[i].data, out.data, output[i].size);
   }
   return 0;
